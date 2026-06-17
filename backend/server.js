@@ -29,14 +29,23 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
-    const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174']
-    if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin)) return callback(null, true)
-    if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true)
-    return callback(new Error('CORS policy: Origin not allowed'))
+    const allowedOrigins = [
+      'http://localhost:5173', 
+      'http://localhost:5174',
+      'https://smart-spends.vercel.app' // Your production domain
+    ];
+    
+    if (!origin) return callback(null, true);
+    
+    // 🌟 Check if origin is localhost OR if it contains ".vercel.app"
+    if (allowedOrigins.includes(origin) || /^http:\/\/localhost:\d+$/.test(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('CORS policy: Origin not allowed'));
   },
   credentials: true,
-}))
+}));
 app.use(express.json());
 app.use(cookieParser());
 
