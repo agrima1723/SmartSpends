@@ -771,7 +771,7 @@ export default function Transactions() {
   const loadAccounts = async () => {
     try {
       // 🌟 UPDATED ENDPOINT
-      const res = await fetch(`${API_BASE}/accounts`, {
+      const res = await fetch(`${API_BASE}/api/accounts`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -800,7 +800,7 @@ export default function Transactions() {
   const loadCategories = async () => {
     try {
       // 🌟 UPDATED ENDPOINT
-      const res = await fetch(`${API_BASE}/categories`, {
+      const res = await fetch(`${API_BASE}/api/categories`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -822,7 +822,7 @@ export default function Transactions() {
     setLoading(true)
     try {
       // 🌟 UPDATED ENDPOINT
-      const res = await fetch(`${API_BASE}/transactions`, {
+      const res = await fetch(`${API_BASE}/api/transactions`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
@@ -887,7 +887,7 @@ export default function Transactions() {
 
     try {
       // 🌟 UPDATED ENDPOINT
-      const res = await fetch(`${API_BASE}/transactions`, {
+      const res = await fetch(`${API_BASE}/api/transactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -945,7 +945,7 @@ export default function Transactions() {
       }
 
       // 🌟 UPDATED ENDPOINT
-      const res = await fetch(`${API_BASE}/accounts`, {
+      const res = await fetch(`${API_BASE}/api/accounts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -975,7 +975,7 @@ export default function Transactions() {
   const handleDeleteTransaction = async (transactionId) => {
     try {
       // 🌟 UPDATED ENDPOINT
-      const res = await fetch(`${API_BASE}/transactions/${transactionId}`, {
+      const res = await fetch(`${API_BASE}/api/transactions/${transactionId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -1002,7 +1002,7 @@ export default function Transactions() {
   const handleChangeTransactionAccount = async (transactionId, newAccountId) => {
     try {
       // 🌟 UPDATED ENDPOINT
-      const res = await fetch(`${API_BASE}/transactions/${transactionId}`, {
+      const res = await fetch(`${API_BASE}/api/transactions/${transactionId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
