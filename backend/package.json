@@ -1,0 +1,38 @@
+{
+  "name": "budget-tracker",
+  "version": "1.0.0",
+  "description": "Full-stack financial app similar to Wallet by BudgetBakers",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+   "dev": "node --env-file=.env --watch server.js",
+    "start": "node server.js",
+    "client": "cd ../frontend && npm run dev",
+    "build": "cd ../frontend && npm run build"
+  },
+  "keywords": [
+    "finance",
+    "budget",
+    "tracker",
+    "mern"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^2.8.0",
+    "argon2": "^0.31.2",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.40.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.0.0",
+    "nodemailer": "^6.9.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
