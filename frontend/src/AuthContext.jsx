@@ -2,6 +2,9 @@ import React, { createContext, useState, useContext, useCallback } from 'react'
 
 const AuthContext = createContext(null)
 
+// 🌟 GRAB THE RENDER URL FROM VERCEL (Falls back to localhost if it's missing)
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -10,7 +13,8 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     setLoading(true)
     try {
-      const response = await fetch('/api/auth/login', {
+      // 🌟 COMBINE THE BASE URL WITH THE ENDPOINT
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -34,7 +38,8 @@ export const AuthProvider = ({ children }) => {
   const signup = useCallback(async (email, displayName, password, baseCurrency = 'USD') => {
     setLoading(true)
     try {
-      const response = await fetch('/api/auth/signup', {
+      // 🌟 COMBINE THE BASE URL WITH THE ENDPOINT
+      const response = await fetch(`${API_BASE}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, displayName, password, baseCurrency }),
@@ -64,7 +69,8 @@ export const AuthProvider = ({ children }) => {
   const forgotPassword = useCallback(async (email) => {
     setLoading(true)
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      // 🌟 COMBINE THE BASE URL WITH THE ENDPOINT
+      const response = await fetch(`${API_BASE}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -82,7 +88,8 @@ export const AuthProvider = ({ children }) => {
   const resetPassword = useCallback(async (resetToken, newPassword) => {
     setLoading(true)
     try {
-      const response = await fetch('/api/auth/reset-password', {
+      // 🌟 COMBINE THE BASE URL WITH THE ENDPOINT
+      const response = await fetch(`${API_BASE}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetToken, newPassword }),
