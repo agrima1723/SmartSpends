@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Sparkles, Loader2, CheckCircle, AlertCircle, Wallet, Target, HelpCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+// 🌟 1. IMPORT THE API BASE FROM YOUR UTILS FILE
+import { API_BASE } from './utils';
 
 export default function AiPlanner() {
   const [formData, setFormData] = useState({ monthlyIncome: '', financialGoal: '', savingsTarget: '' });
@@ -16,7 +18,8 @@ export default function AiPlanner() {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session missing. Please sign back in.');
 
-      const response = await fetch('/api/ai/generate-plan', {
+      // 🌟 2. UPDATED ENDPOINT TO POINT TO YOUR LIVE BACKEND
+      const response = await fetch(`${API_BASE}/api/ai/generate-plan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
