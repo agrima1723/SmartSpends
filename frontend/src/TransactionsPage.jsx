@@ -791,7 +791,7 @@ export default function Transactions() {
     } catch (err) {
       console.error('Failed to load accounts:', err)
       setError('Could not load accounts. Please try again.')
-      if (err.message.includes('Invalid or expired token')) {
+      if (err.message && err.message.includes('Invalid or expired token')) {
         logout()
       }
     }
@@ -812,7 +812,7 @@ export default function Transactions() {
     } catch (err) {
       console.error('Failed to load categories:', err)
       setError('Could not load categories. Please try again.')
-      if (err.message.includes('Invalid or expired token')) {
+      if (err.message && err.message.includes('Invalid or expired token')) {
         logout()
       }
     }
@@ -845,7 +845,7 @@ export default function Transactions() {
     } catch (err) {
       console.error('Failed to load transactions:', err)
       setError(err.message)
-      if (err.message.includes('Invalid or expired token')) {
+      if (err.message && err.message.includes('Invalid or expired token')) {
         logout()
       }
     } finally {
@@ -925,14 +925,17 @@ export default function Transactions() {
     } catch (err) {
       console.error('Error adding transaction:', err)
       setError(err.message)
-      if (err.message.includes('Invalid or expired token')) {
+      if (err.message && err.message.includes('Invalid or expired token')) {
         logout()
       }
     }
   }
 
   const handleCreateInlineAccount = async (e) => {
-    e.preventDefault()
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
     try {
       const payload = {
         accountName: accountForm.accountName,
@@ -963,7 +966,7 @@ export default function Transactions() {
     } catch (err) {
       console.error('Error creating account inline:', err)
       setError(err.message)
-      if (err.message.includes('Invalid or expired token')) {
+      if (err.message && err.message.includes('Invalid or expired token')) {
         logout()
       }
     }
@@ -1040,6 +1043,7 @@ export default function Transactions() {
           )}
         </div>
         <button
+          type="button"
           onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium"
         >
@@ -1122,7 +1126,8 @@ export default function Transactions() {
                   <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setAccountMode('existing')
                         setShowAccountForm(false)
                       }}
@@ -1132,7 +1137,8 @@ export default function Transactions() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setAccountMode('new')
                         setShowAccountForm(true)
                       }}
@@ -1215,15 +1221,16 @@ export default function Transactions() {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        type="submit"
-                        onClick={handleCreateInlineAccount}
+                        type="button"
+                        onClick={(e) => handleCreateInlineAccount(e)}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg"
                       >
                         Create account and use it
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation()
                           setAccountMode('existing')
                           setShowAccountForm(false)
                         }}
@@ -1414,10 +1421,11 @@ export default function Transactions() {
                     </td>
                     <td className="px-6 py-3 text-center">
                       <div className="flex gap-2 justify-center">
-                        <button className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
+                        <button type="button" className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
                           <Edit2 size={16} className="text-blue-500" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleDeleteTransaction(tx.id)}
                           className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
                         >

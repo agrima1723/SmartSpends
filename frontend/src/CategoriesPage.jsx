@@ -132,7 +132,7 @@
 // }
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
-import { API_BASE } from './utils' // ✅ Added global configuration import
+import { API_BASE } from './utils'
 
 export default function CategoriesPage() {
   const { token } = useAuth()
@@ -149,7 +149,8 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/categories`, { // ✅ Added API_BASE
+      // ✅ FIXED: Added /api/ prefix before categories
+      const res = await fetch(`${API_BASE}/api/categories`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -167,7 +168,8 @@ export default function CategoriesPage() {
     e.preventDefault()
     try {
       const payload = { name: form.name, type: form.type, icon: form.icon || 'Tag', color: form.color }
-      const res = await fetch(`${API_BASE}/categories`, { // ✅ Added API_BASE
+      // ✅ FIXED: Added /api/ prefix before categories
+      const res = await fetch(`${API_BASE}/api/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
@@ -185,7 +187,8 @@ export default function CategoriesPage() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this category?')) return
     try {
-      const res = await fetch(`${API_BASE}/categories/${id}`, { // ✅ Added API_BASE
+      // ✅ FIXED: Added /api/ prefix before categories/${id}
+      const res = await fetch(`${API_BASE}/api/categories/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -226,11 +229,11 @@ export default function CategoriesPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Icon</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Icon Name</label>
               <input value={form.icon} onChange={(e) => setForm(prev => ({ ...prev, icon: e.target.value }))} className={inputClasses} placeholder="e.g., Tag, Fastfood, Shopping" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Color</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Color Picker</label>
               <input value={form.color} onChange={(e) => setForm(prev => ({ ...prev, color: e.target.value }))} type="color" className="w-16 h-10 block rounded cursor-pointer border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700" />
             </div>
             <div>

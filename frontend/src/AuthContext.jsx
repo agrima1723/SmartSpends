@@ -3,7 +3,7 @@ import React, { createContext, useState, useContext, useCallback } from 'react'
 const AuthContext = createContext(null)
 
 // 🌟 GRAB THE RENDER URL FROM VERCEL (Falls back to localhost if it's missing)
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true)
     try {
       // 🌟 COMBINE THE BASE URL WITH THE ENDPOINT
-      const response = await fetch(`${API_BASE}/auth/login`, {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true)
     try {
       // 🌟 COMBINE THE BASE URL WITH THE ENDPOINT
-      const response = await fetch(`${API_BASE}/auth/signup`, {
+      const response = await fetch(`${API_BASE}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, displayName, password, baseCurrency }),
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true)
     try {
       // 🌟 COMBINE THE BASE URL WITH THE ENDPOINT
-      const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+      const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true)
     try {
       // 🌟 COMBINE THE BASE URL WITH THE ENDPOINT
-      const response = await fetch(`${API_BASE}/auth/reset-password`, {
+      const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetToken, newPassword }),

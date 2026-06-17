@@ -535,7 +535,7 @@ export default function Analytics() {
 
       // 2. Pass the token inside the standard Authorization header string
       // ✅ CHANGED: Replaced hardcoded path with dynamic API_BASE matching Render infrastructure
-      const response = await fetch(`${API_BASE}/analytics?range=${dateRange}`, {
+      const response = await fetch(`${API_BASE}/api/analytics?range=${dateRange}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

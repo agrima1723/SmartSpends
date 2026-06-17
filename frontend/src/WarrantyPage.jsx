@@ -339,8 +339,8 @@
 // export default WarrantyPage
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
-import { Plus, Trash2, Edit2, AlertCircle, ShieldAlert } from 'lucide-react' // Removed Sparkles
-import { API_BASE } from './utils' // Imported global backend environment variable
+import { Plus, Trash2, Edit2, AlertCircle, ShieldAlert } from 'lucide-react'
+import { API_BASE, formatDate } from './utils'
 
 const WarrantyPage = () => {
   const { token } = useAuth()
@@ -368,7 +368,7 @@ const WarrantyPage = () => {
 
   const fetchWarranties = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/warranty`, { // Added API_BASE
+      const res = await fetch(`${API_BASE}/api/warranty`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -380,7 +380,7 @@ const WarrantyPage = () => {
 
   const fetchExpiringCount = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/warranty/expiring/soon`, { // Added API_BASE
+      const res = await fetch(`${API_BASE}/api/warranty/expiring/soon`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -394,8 +394,8 @@ const WarrantyPage = () => {
     e.preventDefault()
     const method = editingWarranty ? 'PUT' : 'POST'
     const url = editingWarranty 
-      ? `${API_BASE}/api/warranty/${editingWarranty._id}` // Added API_BASE
-      : `${API_BASE}/api/warranty` // Added API_BASE
+      ? `${API_BASE}/api/warranty/${editingWarranty._id}`
+      : `${API_BASE}/api/warranty`
 
     try {
       const res = await fetch(url, {
@@ -421,7 +421,7 @@ const WarrantyPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this warranty?')) return
     try {
-      const res = await fetch(`${API_BASE}/api/warranty/${id}`, { // Added API_BASE
+      const res = await fetch(`${API_BASE}/api/warranty/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -471,7 +471,7 @@ const WarrantyPage = () => {
       return 'bg-red-500/5 border-red-500/30 hover:border-red-500/60 shadow-red-900/10'
     }
     if (isExpiring(expiryDate)) {
-      return 'bg-amber-500/5 border-amber-500/30 hover:border-amber-500/60 shadow-amber-900/10 animate-pulse'
+      return 'bg-amber-500/5 border-amber-500/30 hover:border-amber-500/60 shadow-amber-900/10'
     }
     return 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/50 shadow-emerald-900/5'
   }
@@ -498,7 +498,7 @@ const WarrantyPage = () => {
       </div>
 
       {expiringCount > 0 && (
-        <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent border border-amber-500/30 p-4 rounded-xl flex items-center gap-3 backdrop-blur-md shadow-lg animate-bounce-subtle">
+        <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent border border-amber-500/30 p-4 rounded-xl flex items-center gap-3 backdrop-blur-md shadow-lg">
           <AlertCircle size={22} className="text-amber-400 animate-pulse" />
           <div>
             <p className="font-bold text-amber-200">{expiringCount} items require immediate attention</p>
@@ -597,7 +597,7 @@ const WarrantyPage = () => {
         {warranties.map((warranty) => (
           <div
             key={warranty._id}
-            className={`p-5 rounded-2xl border backdrop-blur-md shadow-lg transition-all duration-300 transform hover:scale-[1.01] hover:-translate-y-0.5 ${getWarrantyStatusStyles(warranty.expiryDate)}`}
+            className={`p-5 rounded-2xl border backdrop-blur-md shadow-lg transition-all duration-300 transform hover:scale-[1.01] hover:-translate-y-0.5 ${getWarrantyStatusStyles(warranty.expiryDate)} ${isExpiring(warranty.expiryDate) ? 'animate-pulse' : ''}`}
           >
             <div className="flex justify-between items-start mb-4">
               <div>
@@ -628,7 +628,7 @@ const WarrantyPage = () => {
               <div>
                 <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Expiry Date</p>
                 <p className="font-bold text-slate-200 mt-0.5">
-                  {new Date(warranty.expiryDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                  {formatDate(warranty.expiryDate)}
                 </p>
               </div>
               <div>
@@ -661,7 +661,7 @@ const WarrantyPage = () => {
       {warranties.length === 0 && !showForm && (
         <div className="text-center py-16 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-inner">
           <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
-            <ShieldAlert size={24} className="text-slate-400" /> {/* Changed fallback icon to ShieldAlert */}
+            <ShieldAlert size={24} className="text-slate-400" />
           </div>
           <p className="text-slate-400 font-medium">No warranty records logged inside your protection pipeline.</p>
         </div>

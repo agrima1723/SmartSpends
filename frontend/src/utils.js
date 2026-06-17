@@ -1,5 +1,5 @@
 ﻿// Add this right at the top of your utils.js file!
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 
 export const classNames = (...classes) => classes.filter(Boolean).join(' ')
 

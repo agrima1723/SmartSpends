@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
-import { AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react'
-import { API_BASE } from './utils' // ✅ Added global configuration import
+import { AlertCircle, Plus, Trash2, Edit2, X } from 'lucide-react'
+import { API_BASE } from './utils'
 
 const BudgetsPage = () => {
   const { token } = useAuth()
@@ -27,10 +27,9 @@ const BudgetsPage = () => {
   const totalBudgetRemaining = budgetProgress.reduce((sum, progress) => sum + parseNumber(progress.remaining), 0)
   const totalBudgets = budgetProgress.length
 
-  // Fetch all budgets
   const fetchBudgets = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/budgets`, { // ✅ Added API_BASE
+      const response = await fetch(`${API_BASE}/api/budgets`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await response.json()
@@ -40,10 +39,9 @@ const BudgetsPage = () => {
     }
   }
 
-  // Fetch budget progress
   const fetchBudgetProgress = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/budgets/progress`, { // ✅ Added API_BASE
+      const response = await fetch(`${API_BASE}/api/budgets/progress`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await response.json()
@@ -53,12 +51,11 @@ const BudgetsPage = () => {
     }
   }
 
-  // Unified data load to handle spinner state cleanly
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
       await Promise.all([fetchBudgets(), fetchBudgetProgress()])
-      setLoading(false) // ✅ Turn off loading spinner only AFTER endpoints completely resolve
+      setLoading(false)
     }
     if (token) {
       loadData()
@@ -69,61 +66,70 @@ const BudgetsPage = () => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'alertThreshold' || name === 'limit' ? parseFloat(value) : value,
+      [name]: name === 'alertThreshold' || name === 'limit' ? value : value,
     }))
   }
 
   const handleCreateBudget = async (e) => {
     e.preventDefault()
     try {
-      const response = await fetch(`${API_BASE}/api/budgets`, { // ✅ Added API_BASE
+      const payload = {
+        ...formData,
+        limit: parseFloat(formData.limit) || 0,
+        alertThreshold: parseInt(formData.alertThreshold) || 75
+      }
+
+      const response = await fetch(`${API_BASE}/api/budgets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
-        await fetchBudgets()
-        await fetchBudgetProgress()
+        await Promise.all([fetchBudgets(), fetchBudgetProgress()])
         setFormData({ category: '', limit: '', period: 'monthly', alertThreshold: 75 })
         setShowForm(false)
-        alert('Budget created successfully!')
       } else {
         alert('Failed to create budget')
       }
     } catch (error) {
       console.error('Error creating budget:', error)
-      alert('Error creating budget')
     }
   }
 
   const handleUpdateBudget = async (e) => {
     e.preventDefault()
+    if (!editingBudget?._id) return
+
     try {
-      const response = await fetch(`${API_BASE}/api/budgets/${editingBudget._id}`, { // ✅ Added API_BASE
+      const payload = {
+        ...formData,
+        limit: parseFloat(formData.limit) || 0,
+        alertThreshold: parseInt(formData.alertThreshold) || 75
+      }
+
+      const response = await fetch(`${API_BASE}/api/budgets/${editingBudget._id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
-        await fetchBudgets()
-        await fetchBudgetProgress()
+        await Promise.all([fetchBudgets(), fetchBudgetProgress()])
         setEditingBudget(null)
         setFormData({ category: '', limit: '', period: 'monthly', alertThreshold: 75 })
-        alert('Budget updated successfully!')
+        setShowForm(false)
       } else {
         alert('Failed to update budget')
       }
     } catch (error) {
       console.error('Error updating budget:', error)
-      alert('Error updating budget')
     }
   }
 
@@ -131,21 +137,18 @@ const BudgetsPage = () => {
     if (!window.confirm('Are you sure you want to delete this budget?')) return
 
     try {
-      const response = await fetch(`${API_BASE}/api/budgets/${id}`, { // ✅ Added API_BASE
+      const response = await fetch(`${API_BASE}/api/budgets/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
 
       if (response.ok) {
-        await fetchBudgets()
-        await fetchBudgetProgress()
-        alert('Budget deleted successfully!')
+        await Promise.all([fetchBudgets(), fetchBudgetProgress()])
       } else {
         alert('Failed to delete budget')
       }
     } catch (error) {
       console.error('Error deleting budget:', error)
-      alert('Error deleting budget')
     }
   }
 
@@ -153,45 +156,47 @@ const BudgetsPage = () => {
     if (!window.confirm('Reset this budget for the new period?')) return
 
     try {
-      const response = await fetch(`${API_BASE}/api/budgets/${id}/reset`, { // ✅ Added API_BASE
+      const response = await fetch(`${API_BASE}/api/budgets/${id}/reset`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
 
       if (response.ok) {
-        await fetchBudgets()
-        await fetchBudgetProgress()
-        alert('Budget reset successfully!')
+        await Promise.all([fetchBudgets(), fetchBudgetProgress()])
       } else {
         alert('Failed to reset budget')
       }
     } catch (error) {
       console.error('Error resetting budget:', error)
-      alert('Error resetting budget')
     }
   }
 
-  const startEdit = (budget) => {
-    if (!budget) return
-    setEditingBudget(budget)
+  const startEdit = (progressItem) => {
+    if (!progressItem) return
+    
+    // Fallback: lookup in primary budgets list, otherwise use data directly from the progress tracker item
+    const baseBudget = budgets.find(b => b._id === progressItem._id) || progressItem
+    
+    setEditingBudget(baseBudget)
     setFormData({
-      category: budget.category,
-      limit: budget.limit.toString(),
-      period: budget.period,
-      alertThreshold: budget.alertThreshold,
+      category: baseBudget.category || '',
+      limit: baseBudget.limit ? baseBudget.limit.toString() : '',
+      period: baseBudget.period || 'monthly',
+      alertThreshold: baseBudget.alertThreshold ?? 75,
     })
     setShowForm(true)
   }
 
   if (loading) {
-    return <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading budgets...</div>
+    return <div className="text-center py-12 text-slate-600 dark:text-slate-400 font-medium">Loading budgets...</div>
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      {/* Header View */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold dark:text-white">Budgets</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Budgets</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">Track your spending limits and see total budget status.</p>
         </div>
         <button
@@ -200,37 +205,39 @@ const BudgetsPage = () => {
             setFormData({ category: '', limit: '', period: 'monthly', alertThreshold: 75 })
             setShowForm(!showForm)
           }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 font-semibold transition shadow-sm"
         >
-          <Plus size={20} />
-          New Budget
+          {showForm ? <X size={18} /> : <Plus size={18} />}
+          {showForm ? 'Close Form' : 'New Budget'}
         </button>
       </div>
 
+      {/* Overview Cards Container */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Total Budgets</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-3">{totalBudgets}</p>
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Budgets</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{totalBudgets}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Total Budget Limit</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-3">${totalBudgetLimit.toFixed(2)}</p>
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Budget Limit</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">${totalBudgetLimit.toFixed(2)}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Remaining Budget</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-3">${totalBudgetRemaining.toFixed(2)}</p>
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Remaining Budget</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">${totalBudgetRemaining.toFixed(2)}</p>
         </div>
       </div>
 
+      {/* Dynamic Creation / Modification Drawer Form */}
       {showForm && (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
-            {editingBudget ? 'Edit Budget' : 'Create New Budget'}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all animate-in fade-in duration-200">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+            {editingBudget ? 'Modify Budget Limits' : 'Set New Category Budget'}
           </h2>
           <form onSubmit={editingBudget ? handleUpdateBudget : handleCreateBudget} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Category
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Category Name
               </label>
               <input
                 type="text"
@@ -239,14 +246,14 @@ const BudgetsPage = () => {
                 onChange={handleInputChange}
                 placeholder="e.g., Food, Entertainment, Transport"
                 required
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Limit
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Limit Amount ($)
                 </label>
                 <input
                   type="number"
@@ -256,19 +263,19 @@ const BudgetsPage = () => {
                   placeholder="0.00"
                   step="0.01"
                   required
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Period
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Timeframe Period
                 </label>
                 <select
                   name="period"
                   value={formData.period}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                 >
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
@@ -278,8 +285,8 @@ const BudgetsPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Alert Threshold (%)
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Alert Threshold ({formData.alertThreshold || 75}%)
               </label>
               <input
                 type="number"
@@ -289,16 +296,16 @@ const BudgetsPage = () => {
                 min="0"
                 max="100"
                 step="5"
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
               />
             </div>
 
-            <div className="flex gap-2 pt-4">
+            <div className="flex gap-3 pt-2">
               <button
                 type="submit"
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition font-medium"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold transition shadow-sm"
               >
-                {editingBudget ? 'Update Budget' : 'Create Budget'}
+                {editingBudget ? 'Save Changes' : 'Initialize Budget'}
               </button>
               <button
                 type="button"
@@ -307,7 +314,7 @@ const BudgetsPage = () => {
                   setEditingBudget(null)
                   setFormData({ category: '', limit: '', period: 'monthly', alertThreshold: 75 })
                 }}
-                className="flex-1 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400 dark:hover:bg-slate-500 text-slate-900 dark:text-white py-2 rounded-lg transition font-medium"
+                className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 py-2 rounded-lg font-bold transition"
               >
                 Cancel
               </button>
@@ -316,75 +323,88 @@ const BudgetsPage = () => {
         </div>
       )}
 
+      {/* Main Budget Aggregates Loop */}
       {budgetProgress.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-          <p className="text-slate-600 dark:text-slate-400">No budgets created yet. Create one to get started!</p>
+        <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <p className="text-slate-500 dark:text-slate-400 font-medium">No system limits registered. Open the dynamic drawer form above to map structural budgets!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {budgetProgress.map(progress => (
-            <div key={progress._id} className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
-              <div className="flex items-start justify-between mb-4">
+          {budgetProgress.map(progress => {
+            const spentNum = parseNumber(progress.spent)
+            const limitNum = parseNumber(progress.limit)
+            const remainingNum = parseNumber(progress.remaining)
+            const percentageNum = typeof progress.percentage === 'number' ? progress.percentage : parseNumber(progress.percentage)
+
+            return (
+              <div key={progress._id} className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{progress.category}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Budget Status</p>
-                </div>
-                {progress.status === 'alert' && (
-                  <AlertCircle className="text-red-500" size={24} />
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-slate-700 dark:text-slate-300">Spent</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      ${parseFloat(progress.spent).toFixed(2)} / ${parseFloat(progress.limit).toFixed(2)}
-                    </span>
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white capitalize">{progress.category}</h3>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Tracked Interval: <span className="uppercase">{progress.period || 'monthly'}</span></p>
+                    </div>
+                    {(progress.status === 'alert' || percentageNum >= (progress.alertThreshold || 75)) && (
+                      <AlertCircle className="text-red-500 animate-pulse" size={22} />
+                    )}
                   </div>
-                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
-                    <div
-                      className={`h-2.5 rounded-full transition-all ${
-                        progress.percentage >= progress.alertThreshold
-                          ? 'bg-red-500'
-                          : progress.percentage >= 75
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
-                      }`}
-                      style={{ width: `${Math.min(100, progress.percentage)}%` }}
-                    />
+
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1.5">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">Cap Distribution Spent</span>
+                        <span className="font-bold text-slate-900 dark:text-white">
+                          ${spentNum.toFixed(2)} / ${limitNum.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5">
+                        <div
+                          className={`h-2.5 rounded-full transition-all duration-300 ${
+                            percentageNum >= (progress.alertThreshold || 75)
+                              ? 'bg-red-500'
+                              : percentageNum >= 75
+                              ? 'bg-yellow-500'
+                              : 'bg-green-500'
+                          }`}
+                          style={{ width: `${Math.min(100, percentageNum)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                      <span className={remainingNum < 0 ? "text-red-500" : "text-slate-600 dark:text-slate-400"}>
+                        {remainingNum < 0 ? `Overdrawn: -$${Math.abs(remainingNum).toFixed(2)}` : `Remaining: $${remainingNum.toFixed(2)}`}
+                      </span>
+                      <span>{percentageNum.toFixed(1)}%</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
-                  <span>Remaining: ${parseFloat(progress.remaining).toFixed(2)}</span>
-                  <span>{progress.percentage.toFixed(1)}%</span>
+                {/* Operations Footing Bar */}
+                <div className="flex gap-2 mt-6 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                  <button
+                    onClick={() => startEdit(progress)}
+                    className="flex-1 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition"
+                  >
+                    <Edit2 size={14} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleResetBudget(progress._id)}
+                    className="flex-1 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-900/90 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm font-bold transition border border-slate-200 dark:border-slate-700"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBudget(progress._id)}
+                    className="px-3 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/60 text-red-600 dark:text-red-400 py-2 rounded-lg flex items-center justify-center transition"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
-
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={() => startEdit(budgets.find(b => b._id === progress._id))}
-                  className="flex-1 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-300 py-2 rounded-lg flex items-center justify-center gap-2 transition"
-                >
-                  <Edit2 size={16} />
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleResetBudget(progress._id)}
-                  className="flex-1 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-300 py-2 rounded-lg transition"
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={() => handleDeleteBudget(progress._id)}
-                  className="flex-1 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 text-red-600 dark:text-red-300 py-2 rounded-lg flex items-center justify-center gap-2 transition"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
