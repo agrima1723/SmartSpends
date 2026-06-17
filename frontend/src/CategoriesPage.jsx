@@ -132,6 +132,7 @@
 // }
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
+import { API_BASE } from './utils' // ✅ Added global configuration import
 
 export default function CategoriesPage() {
   const { token } = useAuth()
@@ -148,7 +149,7 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/categories', {
+      const res = await fetch(`${API_BASE}/categories`, { // ✅ Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -166,7 +167,7 @@ export default function CategoriesPage() {
     e.preventDefault()
     try {
       const payload = { name: form.name, type: form.type, icon: form.icon || 'Tag', color: form.color }
-      const res = await fetch('/api/categories', {
+      const res = await fetch(`${API_BASE}/categories`, { // ✅ Added API_BASE
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
@@ -184,7 +185,7 @@ export default function CategoriesPage() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this category?')) return
     try {
-      const res = await fetch(`/api/categories/${id}`, {
+      const res = await fetch(`${API_BASE}/categories/${id}`, { // ✅ Added API_BASE
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -203,7 +204,7 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold dark:text-white dark:text-white">Categories</h1>
+        <h1 className="text-3xl font-bold dark:text-white">Categories</h1>
       </div>
 
       {error && <div className="p-3 bg-red-50 text-red-700 rounded border border-red-200">{error}</div>}

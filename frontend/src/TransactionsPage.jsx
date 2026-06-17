@@ -715,6 +715,8 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import { Plus, Edit2, Trash2, Search, Filter } from 'lucide-react'
+// 🌟 IMPORT THE API BASE FROM YOUR UTILS FILE
+import { API_BASE } from './utils'
 
 const parseAmountValue = (value) => {
   if (value == null) return 0
@@ -768,7 +770,8 @@ export default function Transactions() {
 
   const loadAccounts = async () => {
     try {
-      const res = await fetch('/api/accounts', {
+      // 🌟 UPDATED ENDPOINT
+      const res = await fetch(`${API_BASE}/accounts`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -796,7 +799,8 @@ export default function Transactions() {
 
   const loadCategories = async () => {
     try {
-      const res = await fetch('/api/categories', {
+      // 🌟 UPDATED ENDPOINT
+      const res = await fetch(`${API_BASE}/categories`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -817,7 +821,8 @@ export default function Transactions() {
   const loadTransactions = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/transactions', {
+      // 🌟 UPDATED ENDPOINT
+      const res = await fetch(`${API_BASE}/transactions`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
@@ -881,7 +886,8 @@ export default function Transactions() {
     }
 
     try {
-      const res = await fetch('/api/transactions', {
+      // 🌟 UPDATED ENDPOINT
+      const res = await fetch(`${API_BASE}/transactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -935,7 +941,8 @@ export default function Transactions() {
         currency: accountForm.currency,
       }
 
-      const res = await fetch('/api/accounts', {
+      // 🌟 UPDATED ENDPOINT
+      const res = await fetch(`${API_BASE}/accounts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -964,7 +971,8 @@ export default function Transactions() {
 
   const handleDeleteTransaction = async (transactionId) => {
     try {
-      const res = await fetch(`/api/transactions/${transactionId}`, {
+      // 🌟 UPDATED ENDPOINT
+      const res = await fetch(`${API_BASE}/transactions/${transactionId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -990,7 +998,8 @@ export default function Transactions() {
 
   const handleChangeTransactionAccount = async (transactionId, newAccountId) => {
     try {
-      const res = await fetch(`/api/transactions/${transactionId}`, {
+      // 🌟 UPDATED ENDPOINT
+      const res = await fetch(`${API_BASE}/transactions/${transactionId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -1022,7 +1031,7 @@ export default function Transactions() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold dark:text-white dark:text-white">Transactions</h1>
+          <h1 className="text-3xl font-bold dark:text-white">Transactions</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
             {transactions.length} transactions
           </p>

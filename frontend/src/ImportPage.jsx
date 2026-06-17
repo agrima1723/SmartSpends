@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import { Upload, Download, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { API_BASE } from './utils' // ✅ Imported global backend environment variable
 
 const ImportPage = () => {
   const { token } = useAuth()
@@ -11,41 +12,46 @@ const ImportPage = () => {
   const [loading, setLoading] = useState(false)
   const [importResult, setImportResult] = useState(null)
 
-  useEffect(() => {
-    fetchAccounts()
-    fetchImportHistory()
-  }, [token])
-
+  // Fetch accounts
   const fetchAccounts = async () => {
     try {
-      const res = await fetch('/api/accounts', {
+      const res = await fetch(`${API_BASE}/api/accounts`, { // ✅ Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
-      setAccounts(data.accounts || [])
-      if (data.accounts && data.accounts.length > 0) {
-        setSelectedAccountId(data.accounts[0]._id)
+      const accountList = data.accounts || []
+      setAccounts(accountList)
+      if (accountList.length > 0) {
+        setSelectedAccountId(accountList[0]._id)
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error fetching accounts:', error)
     }
   }
 
+  // Fetch summary/history
   const fetchImportHistory = async () => {
     try {
-      const res = await fetch('/api/import/history', {
+      const res = await fetch(`${API_BASE}/api/import/history`, { // ✅ Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
       setImports(data.imports || [])
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error fetching import history:', error)
     }
   }
 
+  useEffect(() => {
+    if (token) {
+      fetchAccounts()
+      fetchImportHistory()
+    }
+  }, [token])
+
   const handleDownloadTemplate = async () => {
     try {
-      const res = await fetch('/api/import/template', {
+      const res = await fetch(`${API_BASE}/api/import/template`, { // ✅ Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
       const blob = await res.blob()
@@ -57,7 +63,7 @@ const ImportPage = () => {
       a.click()
       window.URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error downloading template:', error)
     }
   }
 
@@ -70,7 +76,7 @@ const ImportPage = () => {
 
     setLoading(true)
     try {
-      const res = await fetch('/api/import/upload', {
+      const res = await fetch(`${API_BASE}/api/import/upload`, { // ✅ Added API_BASE
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,9 +92,9 @@ const ImportPage = () => {
       setImportResult(data.importLog)
       setCsvText('')
       await fetchImportHistory()
-      alert(`Import complete: ${data.importLog.successfulImports} successful, ${data.importLog.failedRows} failed`)
+      alert(`Import complete: ${data.importLog?.successfulImports || 0} successful, ${data.importLog?.failedRows || 0} failed`)
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error uploading CSV:', error)
       alert('Import failed')
     } finally {
       setLoading(false)
@@ -110,7 +116,7 @@ const ImportPage = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold dark:text-white dark:text-white">CSV Import</h1>
+      <h1 className="text-3xl font-bold dark:text-white">CSV Import</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upload Form */}
@@ -131,7 +137,7 @@ const ImportPage = () => {
             <select
               value={selectedAccountId}
               onChange={(e) => setSelectedAccountId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Choose account...</option>
               {accounts.map((acc) => (
@@ -151,22 +157,22 @@ const ImportPage = () => {
               onChange={(e) => setCsvText(e.target.value)}
               placeholder={'Date,Description,Category,Amount,Type\n2024-01-15,Grocery,Groceries,50.00,expense'}
               rows="6"
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono text-sm"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <button
             onClick={handleUploadCSV}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white py-2 rounded-lg transition"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white py-2 rounded-lg transition font-medium"
           >
             <Upload size={18} /> {loading ? 'Importing...' : 'Import CSV'}
           </button>
 
           {importResult && (
             <div className={`p-3 rounded-lg text-sm ${importResult.status === 'completed' ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'}`}>
-              <p>✓ {importResult.successfulImports} transactions imported</p>
-              {importResult.failedRows > 0 && <p>✗ {importResult.failedRows} rows failed</p>}
+              <p>✓ {importResult.successfulImports || 0} transactions imported</p>
+              {(importResult.failedRows > 0) && <p>✗ {importResult.failedRows} rows failed</p>}
             </div>
           )}
         </div>
@@ -201,18 +207,18 @@ const ImportPage = () => {
       </div>
 
       {/* Import History */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Recent Imports</h2>
         <div className="space-y-3">
           {imports.length === 0 ? (
-            <p className="text-slate-600 dark:text-slate-400">No imports yet</p>
+            <p className="text-slate-600 dark:text-slate-400 font-medium">No imports yet</p>
           ) : (
             imports.map((imp) => (
-              <div key={imp._id} className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg flex justify-between items-center">
+              <div key={imp._id} className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg flex justify-between items-center border border-slate-100 dark:border-slate-700">
                 <div>
                   <p className="font-semibold text-slate-900 dark:text-white">{imp.fileName}</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {imp.accountId?.accountName} • {new Date(imp.createdAt).toLocaleDateString()}
+                    {imp.accountId?.accountName || 'Unknown Account'} • {new Date(imp.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -220,7 +226,7 @@ const ImportPage = () => {
                     <p className="text-sm font-semibold text-slate-900 dark:text-white">
                       {imp.successfulImports}/{imp.totalRows}
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">successful</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">successful</p>
                   </div>
                   {getStatusIcon(imp.status)}
                 </div>

@@ -496,6 +496,8 @@
 // }
 
 import React, { useState, useEffect } from 'react'
+import { API_BASE } from './utils' // Use '../utils' if this component lives inside a subfolder (e.g., src/components/Analytics.jsx)
+
 import {
   BarChart,
   Bar,
@@ -532,7 +534,8 @@ export default function Analytics() {
       }
 
       // 2. Pass the token inside the standard Authorization header string
-      const response = await fetch(`/api/analytics?range=${dateRange}`, {
+      // ✅ CHANGED: Replaced hardcoded path with dynamic API_BASE matching Render infrastructure
+      const response = await fetch(`${API_BASE}/analytics?range=${dateRange}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -557,7 +560,6 @@ export default function Analytics() {
       setLoading(false)
     }
   }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">

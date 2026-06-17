@@ -144,6 +144,8 @@
 // }
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
+// 🌟 IMPORT THE API BASE FROM YOUR UTILS FILE
+import { API_BASE } from './utils'
 
 export default function AccountsPage() {
   const { token } = useAuth()
@@ -160,7 +162,8 @@ export default function AccountsPage() {
   const fetchAccounts = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/accounts', {
+      // 🌟 UPDATED ENDPOINT TO USE THE RENDER BACKEND URL
+      const res = await fetch(`${API_BASE}/accounts`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -184,7 +187,8 @@ export default function AccountsPage() {
         currency: form.currency,
       }
 
-      const res = await fetch('/api/accounts', {
+      // 🌟 UPDATED ENDPOINT TO USE THE RENDER BACKEND URL
+      const res = await fetch(`${API_BASE}/accounts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +210,8 @@ export default function AccountsPage() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this account?')) return
     try {
-      const res = await fetch(`/api/accounts/${id}`, {
+      // 🌟 UPDATED ENDPOINT TO USE THE RENDER BACKEND URL WITH THE ACCOUNT ID
+      const res = await fetch(`${API_BASE}/accounts/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -233,7 +238,7 @@ export default function AccountsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold dark:text-white dark:text-white">Accounts</h1>
+        <h1 className="text-3xl font-bold dark:text-white">Accounts</h1>
       </div>
 
       {error && <div className="p-3 bg-red-50 text-red-700 rounded border border-red-200">{error}</div>}

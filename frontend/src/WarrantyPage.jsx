@@ -339,7 +339,8 @@
 // export default WarrantyPage
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
-import { Plus, Trash2, Edit2, AlertCircle, ShieldAlert, Sparkles } from 'lucide-react'
+import { Plus, Trash2, Edit2, AlertCircle, ShieldAlert } from 'lucide-react' // Removed Sparkles
+import { API_BASE } from './utils' // Imported global backend environment variable
 
 const WarrantyPage = () => {
   const { token } = useAuth()
@@ -359,13 +360,15 @@ const WarrantyPage = () => {
   })
 
   useEffect(() => {
-    fetchWarranties()
-    fetchExpiringCount()
+    if (token) {
+      fetchWarranties()
+      fetchExpiringCount()
+    }
   }, [token])
 
   const fetchWarranties = async () => {
     try {
-      const res = await fetch('/api/warranty', {
+      const res = await fetch(`${API_BASE}/api/warranty`, { // Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -377,7 +380,7 @@ const WarrantyPage = () => {
 
   const fetchExpiringCount = async () => {
     try {
-      const res = await fetch('/api/warranty/expiring/soon', {
+      const res = await fetch(`${API_BASE}/api/warranty/expiring/soon`, { // Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -390,7 +393,9 @@ const WarrantyPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const method = editingWarranty ? 'PUT' : 'POST'
-    const url = editingWarranty ? `/api/warranty/${editingWarranty._id}` : '/api/warranty'
+    const url = editingWarranty 
+      ? `${API_BASE}/api/warranty/${editingWarranty._id}` // Added API_BASE
+      : `${API_BASE}/api/warranty` // Added API_BASE
 
     try {
       const res = await fetch(url, {
@@ -416,7 +421,7 @@ const WarrantyPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this warranty?')) return
     try {
-      const res = await fetch(`/api/warranty/${id}`, {
+      const res = await fetch(`${API_BASE}/api/warranty/${id}`, { // Added API_BASE
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -461,7 +466,6 @@ const WarrantyPage = () => {
     return new Date(expiryDate) < new Date()
   }
 
-  // Returns unique glass glow borders depending on timeline protection metrics
   const getWarrantyStatusStyles = (expiryDate) => {
     if (isExpired(expiryDate)) {
       return 'bg-red-500/5 border-red-500/30 hover:border-red-500/60 shadow-red-900/10'
@@ -657,7 +661,7 @@ const WarrantyPage = () => {
       {warranties.length === 0 && !showForm && (
         <div className="text-center py-16 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-inner">
           <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
-            <Sparkles size={24} className="text-slate-400" />
+            <ShieldAlert size={24} className="text-slate-400" /> {/* Changed fallback icon to ShieldAlert */}
           </div>
           <p className="text-slate-400 font-medium">No warranty records logged inside your protection pipeline.</p>
         </div>

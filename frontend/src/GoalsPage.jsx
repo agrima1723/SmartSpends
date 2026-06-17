@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import { Plus, Trash2, Edit2, Target, TrendingUp } from 'lucide-react'
+import { API_BASE } from './utils' // ✅ Imported global backend environment variable
 
 const GoalsPage = () => {
   const { token } = useAuth()
@@ -23,7 +24,7 @@ const GoalsPage = () => {
   // Fetch goals
   const fetchGoals = async () => {
     try {
-      const response = await fetch('/api/goals', {
+      const response = await fetch(`${API_BASE}/api/goals`, { // ✅ Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -45,7 +46,7 @@ const GoalsPage = () => {
   // Fetch summary
   const fetchSummary = async () => {
     try {
-      const response = await fetch('/api/goals/summary', {
+      const response = await fetch(`${API_BASE}/api/goals/summary`, { // ✅ Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -64,10 +65,17 @@ const GoalsPage = () => {
     }
   }
 
+  // Unified loader pipeline execution
   useEffect(() => {
-    fetchGoals()
-    fetchSummary()
-    setLoading(false)
+    const loadAllPageData = async () => {
+      setLoading(true)
+      await Promise.all([fetchGoals(), fetchSummary()])
+      setLoading(false) // ✅ Turn off loading spinner only AFTER endpoints completely resolve
+    }
+
+    if (token) {
+      loadAllPageData()
+    }
   }, [token])
 
   const handleInputChange = (e) => {
@@ -83,8 +91,8 @@ const GoalsPage = () => {
     try {
       const method = editingGoal ? 'PATCH' : 'POST'
       const url = editingGoal
-        ? `/api/goals/${editingGoal._id}`
-        : '/api/goals'
+        ? `${API_BASE}/api/goals/${editingGoal._id}` // ✅ Added API_BASE
+        : `${API_BASE}/api/goals` // ✅ Added API_BASE
 
       const response = await fetch(url, {
         method,
@@ -113,21 +121,22 @@ const GoalsPage = () => {
         alert(editingGoal ? 'Goal updated!' : 'Goal created successfully!')
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error handling form submit:', error)
     }
   }
 
   const handleEditGoal = (goal) => {
+    if (!goal) return
     setEditingGoal(goal)
     setFormData({
       name: goal.name,
-      description: goal.description,
-      icon: goal.icon,
-      color: goal.color,
+      description: goal.description || '',
+      icon: goal.icon || 'Target',
+      color: goal.color || '#3B82F6',
       targetAmount: parseFloat(goal.targetAmount.toString()),
-      deadline: goal.deadline.split('T')[0],
-      category: goal.category,
-      priority: goal.priority,
+      deadline: goal.deadline ? goal.deadline.split('T')[0] : '',
+      category: goal.category || 'General',
+      priority: goal.priority || 'medium',
     })
     setShowForm(true)
   }
@@ -136,7 +145,7 @@ const GoalsPage = () => {
     if (!window.confirm('Delete this goal?')) return
 
     try {
-      const response = await fetch(`/api/goals/${id}`, {
+      const response = await fetch(`${API_BASE}/api/goals/${id}`, { // ✅ Added API_BASE
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -153,10 +162,10 @@ const GoalsPage = () => {
 
   const handleAddSavings = async (id) => {
     const amount = prompt('Enter amount to add:')
-    if (!amount || amount <= 0) return
+    if (!amount || parseFloat(amount) <= 0) return
 
     try {
-      const response = await fetch(`/api/goals/${id}/save`, {
+      const response = await fetch(`${API_BASE}/api/goals/${id}/save`, { // ✅ Added API_BASE
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -176,13 +185,13 @@ const GoalsPage = () => {
   }
 
   if (loading) {
-    return <div className="text-slate-600 dark:text-slate-400">Loading...</div>
+    return <div className="text-center py-12 text-slate-600 dark:text-slate-400 font-medium">Loading goals dashboard...</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold dark:text-white dark:text-white">Financial Goals</h1>
+        <h1 className="text-3xl font-bold dark:text-white">Financial Goals</h1>
         <button
           onClick={() => {
             setEditingGoal(null)
@@ -211,27 +220,27 @@ const GoalsPage = () => {
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Total Goals</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{summary.total}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">{summary.active} active</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{summary.active} active</p>
           </div>
 
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Target Amount</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              ${summary.totalTarget.toFixed(0)}
+              ${(summary.totalTarget || 0).toFixed(0)}
             </p>
           </div>
 
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Total Saved</p>
             <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-              ${summary.totalSaved.toFixed(2)}
+              ${(summary.totalSaved || 0).toFixed(2)}
             </p>
           </div>
 
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Overall Progress</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              {summary.overallProgress.toFixed(1)}%
+              {(summary.overallProgress || 0).toFixed(1)}%
             </p>
           </div>
         </div>

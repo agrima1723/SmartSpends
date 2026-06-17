@@ -1,4 +1,7 @@
-﻿export const classNames = (...classes) => classes.filter(Boolean).join(' ')
+﻿// Add this right at the top of your utils.js file!
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
+export const classNames = (...classes) => classes.filter(Boolean).join(' ')
 
 export const formatCurrency = (value, currency = 'USD') => {
   const amount = Number(value) || 0

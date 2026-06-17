@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import { AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react'
+import { API_BASE } from './utils' // ✅ Added global configuration import
 
 const BudgetsPage = () => {
   const { token } = useAuth()
@@ -21,24 +22,15 @@ const BudgetsPage = () => {
     return Number.isNaN(number) ? 0 : number
   }
 
-  const totalBudgetLimit = budgetProgress.reduce(
-    (sum, progress) => sum + parseNumber(progress.limit),
-    0
-  )
-  const totalBudgetSpent = budgetProgress.reduce(
-    (sum, progress) => sum + parseNumber(progress.spent),
-    0
-  )
-  const totalBudgetRemaining = budgetProgress.reduce(
-    (sum, progress) => sum + parseNumber(progress.remaining),
-    0
-  )
+  const totalBudgetLimit = budgetProgress.reduce((sum, progress) => sum + parseNumber(progress.limit), 0)
+  const totalBudgetSpent = budgetProgress.reduce((sum, progress) => sum + parseNumber(progress.spent), 0)
+  const totalBudgetRemaining = budgetProgress.reduce((sum, progress) => sum + parseNumber(progress.remaining), 0)
   const totalBudgets = budgetProgress.length
 
   // Fetch all budgets
   const fetchBudgets = async () => {
     try {
-      const response = await fetch('/api/budgets', {
+      const response = await fetch(`${API_BASE}/api/budgets`, { // ✅ Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await response.json()
@@ -51,7 +43,7 @@ const BudgetsPage = () => {
   // Fetch budget progress
   const fetchBudgetProgress = async () => {
     try {
-      const response = await fetch('/api/budgets/progress', {
+      const response = await fetch(`${API_BASE}/api/budgets/progress`, { // ✅ Added API_BASE
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await response.json()
@@ -61,10 +53,16 @@ const BudgetsPage = () => {
     }
   }
 
+  // Unified data load to handle spinner state cleanly
   useEffect(() => {
-    fetchBudgets()
-    fetchBudgetProgress()
-    setLoading(false)
+    const loadData = async () => {
+      setLoading(true)
+      await Promise.all([fetchBudgets(), fetchBudgetProgress()])
+      setLoading(false) // ✅ Turn off loading spinner only AFTER endpoints completely resolve
+    }
+    if (token) {
+      loadData()
+    }
   }, [token])
 
   const handleInputChange = (e) => {
@@ -78,7 +76,7 @@ const BudgetsPage = () => {
   const handleCreateBudget = async (e) => {
     e.preventDefault()
     try {
-      const response = await fetch('/api/budgets', {
+      const response = await fetch(`${API_BASE}/api/budgets`, { // ✅ Added API_BASE
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +103,7 @@ const BudgetsPage = () => {
   const handleUpdateBudget = async (e) => {
     e.preventDefault()
     try {
-      const response = await fetch(`/api/budgets/${editingBudget._id}`, {
+      const response = await fetch(`${API_BASE}/api/budgets/${editingBudget._id}`, { // ✅ Added API_BASE
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +131,7 @@ const BudgetsPage = () => {
     if (!window.confirm('Are you sure you want to delete this budget?')) return
 
     try {
-      const response = await fetch(`/api/budgets/${id}`, {
+      const response = await fetch(`${API_BASE}/api/budgets/${id}`, { // ✅ Added API_BASE
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -155,7 +153,7 @@ const BudgetsPage = () => {
     if (!window.confirm('Reset this budget for the new period?')) return
 
     try {
-      const response = await fetch(`/api/budgets/${id}/reset`, {
+      const response = await fetch(`${API_BASE}/api/budgets/${id}/reset`, { // ✅ Added API_BASE
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -174,6 +172,7 @@ const BudgetsPage = () => {
   }
 
   const startEdit = (budget) => {
+    if (!budget) return
     setEditingBudget(budget)
     setFormData({
       category: budget.category,
@@ -185,14 +184,14 @@ const BudgetsPage = () => {
   }
 
   if (loading) {
-    return <div className="text-center text-slate-600 dark:text-slate-400">Loading budgets...</div>
+    return <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading budgets...</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold dark:text-white dark:text-white">Budgets</h1>
+          <h1 className="text-3xl font-bold dark:text-white">Budgets</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">Track your spending limits and see total budget status.</p>
         </div>
         <button

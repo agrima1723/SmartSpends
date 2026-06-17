@@ -334,6 +334,8 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import { PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { TrendingUp, Wallet, DollarSign } from 'lucide-react'
+// 🌟 IMPORT THE API BASE FROM YOUR UTILS FILE
+import { API_BASE } from './utils'
 
 const CHART_COLORS = ['#38BDF8', '#818CF8', '#A78BFA', '#F472B6', '#FB7185', '#F59E0B', '#34D399']
 
@@ -380,9 +382,10 @@ export default function Dashboard() {
     try {
       if (!token) throw new Error('Not authenticated')
 
+      // 🌟 UPDATED ENDPOINTS TO USE THE RENDER BACKEND BASE URL
       const [accountsRes, transactionsRes] = await Promise.all([
-        fetch('/api/accounts', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/transactions', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE}/accounts`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE}/transactions`, { headers: { Authorization: `Bearer ${token}` } }),
       ])
 
       if (!accountsRes.ok) {
@@ -572,7 +575,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 2. CHARTS SECTION - REDESIGNED */}
+      {/* 2. CHARTS SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Expenses by Category Card */}
         <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
@@ -607,7 +610,6 @@ export default function Dashboard() {
                   />
                 </PieChart>
               </ResponsiveContainer>
-              {/* Absolute Centered Total Outflow Indicator */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Total Out</span>
                 <span className="text-xl font-black text-white mt-0.5">${Math.round(data.expense).toLocaleString()}</span>
